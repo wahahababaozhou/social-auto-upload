@@ -47,6 +47,14 @@ async def tiktok_setup(account_file, handle=False):
         tiktok_logger.info('[+] cookie file is not existed or expired. Now open the browser auto. Please login with your way(gmail phone, whatever, the cookie file will generated after login')
         await get_tiktok_cookie(account_file)
     return True
+async def xhs_setup(account_file, handle=False):
+    account_file = get_absolute_path(account_file, "tk_uploader")
+    if not os.path.exists(account_file) or not await cookie_auth(account_file):
+        if not handle:
+            return False
+        tiktok_logger.info('[+] cookie file is not existed or expired. Now open the browser auto. Please login with your way(gmail phone, whatever, the cookie file will generated after login')
+        await get_xhs_cookie(account_file)
+    return True
 
 
 async def get_tiktok_cookie(account_file):
@@ -65,6 +73,26 @@ async def get_tiktok_cookie(account_file):
         # Pause the page, and start recording manually.
         page = await context.new_page()
         await page.goto("https://www.tiktok.com/login?lang=en")
+        await page.pause()
+        # 点击调试器的继续，保存cookie
+        await context.storage_state(path=account_file)
+
+async def get_xhs_cookie(account_file):
+    async with async_playwright() as playwright:
+        options = {
+            'args': [
+                '--lang zh-CN',
+            ],
+            'headless': False,  # Set headless option here
+        }
+        # Make sure to run headed.
+        browser = await playwright.chromium.launch(**options)
+        # Setup context however you like.
+        context = await browser.new_context()  # Pass any options
+        context = await set_init_script(context)
+        # Pause the page, and start recording manually.
+        page = await context.new_page()
+        await page.goto("https://www.xiaohongshu.com/explore")
         await page.pause()
         # 点击调试器的继续，保存cookie
         await context.storage_state(path=account_file)
@@ -244,8 +272,8 @@ class TiktokVideo(object):
 
     async def change_language(self, page):
         # set the language to english
-        await page.goto("https://www.tiktok.com")
-        await page.wait_for_url("https://www.tiktok.com/", timeout=100000)
+        await page.goto("https://www.tiktok.com/setting")
+        await page.wait_for_url("https://www.tiktok.com/setting", timeout=100000)
         await page.wait_for_selector('#header-more-menu-icon')
 
         await page.locator('#header-more-menu-icon').hover()
@@ -253,18 +281,27 @@ class TiktokVideo(object):
         await page.locator('#lang-setting-popup-list >> text=English').click()
 
     async def click_publish(self, page):
-        success_flag_div = 'div.common-modal-confirm-modal'
-        while True:
+        # success_flag_div = 'div.common-modal-confirm-modal'
+        specific_text = "Manage your posts"
+        # 最多循环20次
+        for i in range(20):
             try:
                 publish_button = self.locator_base.locator('div.button-group button').nth(0)
                 if await publish_button.count():
                     await publish_button.click()
 
-                await self.locator_base.locator(success_flag_div).wait_for(state="visible", timeout=3000)
-                tiktok_logger.success("  [-] video published success")
-                break
+                # await self.locator_base.locator(success_flag_div).wait_for(state="visible", timeout=3000)
+                # 判定是否进入作品管理页面
+
+                endpage_span = self.locator_base.locator(f'span:has-text("{specific_text}")')
+                if await endpage_span.count():
+                    tiktok_logger.success("  [-] video published success")
+                    break
+                if i == 19:
+                    tiktok_logger.exception(f"到达第 {20} 次时，跳出循环,结束上传,并通知上传失败")
+                    break  # 当 i 等于 10 时，跳出循环
             except Exception as e:
-                if await self.locator_base.locator(success_flag_div).count():
+                if await self.locator_base.locator(f'span:has-text("{specific_text}")').count():
                     tiktok_logger.success("  [-]video published success")
                     break
                 else:
