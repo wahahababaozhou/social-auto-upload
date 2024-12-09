@@ -4,7 +4,6 @@ from pathlib import Path
 from conf import BASE_DIR
 # from tk_uploader.main import tiktok_setup, TiktokVideo
 from uploader.xhs_getvideo.main_chrome import xhsVideo, xhs_setup
-from utils.files_times import generate_schedule_time_next_day, get_title_and_hashtags
 
 if __name__ == '__main__':
     account_file = Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json")
