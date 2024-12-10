@@ -40,7 +40,7 @@ async def get_xhs_cookie(account_file):
             'args': [
                 '--lang zh-CN',
             ],
-            'headless': False,  # Set headless option here
+            'headless': True,
         }
         # Make sure to run headed.
         browser = await playwright.chromium.launch(**options)
@@ -199,9 +199,9 @@ class xhsVideo(object):
             # 不在每次调用时关闭连接，保持连接池更高效。
             pass
 
-    async def getVideoDownloadedURL(self, url):
+    async def getVideoDownloadedURL(self, urlid):
         # 获取所有符合条件的 a 标签
-        elements = await self.page.query_selector_all('a[href="' + url + '"]')
+        elements = await self.page.query_selector_all('a[href="' + urlid + '"]')
         # 如果找到了元素，点击第一个元素（或者根据需要选择特定的元素）
         if elements:
             # 这里选择点击第一个元素
@@ -213,21 +213,29 @@ class xhsVideo(object):
             # 获取跳转后的页面 URL
             current_url = self.page.url
             print(current_url)
-            # 回退到上一个页面
-            await self.page.go_back()
-            # 等待回退后的页面加载完成
+            await self.page.wait_for_timeout(3000)
+            await self.page.goto(self.url, wait_until='load')  # 等待页面完全加载
+            # await self.page.goto(self.url)
+            # await self.page.wait_for_selector('div.close-circle')
+            # close = await self.page.query_selector_all('div.close-circle')
+            # if close:
+            #     await close[0].click()  # 访问列表的第一个元素并点击
+            # 等待回退后的页面加载完成,最多6秒
             await self.page.wait_for_load_state('load')
-            await self.page.wait_for_timeout(5000)  # 加载完成后再等待5秒
+            # 等待 5 秒钟，确保页面有足够的时间进行加载或其他操作
+            await self.page.wait_for_timeout(3000)
+
             return current_url
         else:
             print("current_url get error")
             return None
 
     async def getUserHome(self, playwright: Playwright):
-        browser = await playwright.chromium.launch(headless=False, executable_path=self.local_executable_path)
+        browser = await playwright.chromium.launch(headless=True, executable_path=self.local_executable_path)
         context = await browser.new_context(storage_state=self.account_file)
         context = await set_init_script(context)
         self.page = await context.new_page()
+        await self.page.set_viewport_size({'width': 1280, 'height': 800})
         # 访问用户主页
         await self.page.goto(self.url)  # 替换为目标用户主页链接
         # 等待页面加载
@@ -242,9 +250,9 @@ class xhsVideo(object):
         for element in elements:
             href = await element.get_attribute('href')
             links.append(href)
-        # 打印所有符合条件的 a 标签的 href
-        for link in links:
-            print(link)
+        # 打印符合条件的 a 标签的 href,只取最新的3个
+        for link in links[:3]:
+            print('开始处理链接:'+link)
             # 检查 link 是否已存在
             # self.cursor.execute("SELECT * FROM videolist WHERE link = %s", (link,))
             self.cursor.execute(
@@ -261,14 +269,6 @@ class xhsVideo(object):
                 is_download_from_db = result[4]
                 file_path_from_db = result[5]
                 id = result[6]
-                # 打印或返回查询的结果
-                print(f"链接: {link_from_db}")
-                print(f"作者: {author_from_db}")
-                print(f"作者首页URL: {author_home_from_db}")
-                print(f"爬取时间: {find_data_from_db}")
-                print(f"是否下载: {is_download_from_db}")
-                print(f"文件路径: {file_path_from_db}")
-                print(f"ID: {id}")
                 # 检查是否下载
                 if is_download_from_db == '0':
                     # 获取视频下载URL
