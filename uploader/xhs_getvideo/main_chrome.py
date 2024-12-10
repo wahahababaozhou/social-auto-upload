@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 
 import mysql.connector
@@ -139,11 +140,11 @@ class xhsVideo(object):
         INSERT INTO videodetails (
             collection_count, comment_count, share_count, like_count, tags, work_id, work_url, 
             title, description, work_type, publish_time, last_update_time, author_nickname, 
-            author_id, author_url, download_url, gif_url, collection_time
+            author_id, author_url, download_url, gif_url, collection_time,file_path
         ) VALUES (
             %(collection_count)s, %(comment_count)s, %(share_count)s, %(like_count)s, %(tags)s, %(work_id)s, %(work_url)s, 
             %(title)s, %(description)s, %(work_type)s, %(publish_time)s, %(last_update_time)s, %(author_nickname)s, 
-            %(author_id)s, %(author_url)s, %(download_url)s, %(gif_url)s, %(collection_time)s
+            %(author_id)s, %(author_url)s, %(download_url)s, %(gif_url)s, %(collection_time)s, %(file_path)s
         );
         """
         # 将中文字段名转换为英文
@@ -167,15 +168,16 @@ class xhsVideo(object):
             'author_url': item.get('作者链接', '') if item.get('作者链接') else None,
             'download_url': ','.join(item.get('下载地址', [])) if item.get('下载地址') else None,  # 合并下载地址列表
             'gif_url': ','.join(str(url) for url in item.get('动图地址', []) if url) if item.get('动图地址') else None,
-            'collection_time': datetime.strptime(item.get('采集时间', '1970-01-01 00:00:00'), '%Y-%m-%d %H:%M:%S')
-            if item.get('采集时间') else None
+            'collection_time': datetime.strptime(item.get('采集时间', '1970-01-01 00:00:00'),
+                                                 '%Y-%m-%d %H:%M:%S') if item.get('采集时间') else None,
+            'file_path': "D:\\xhs\\Download\\" + item.get('作品ID') + ".mov",
         }
 
         # 插入数据
         self.cursor.execute(insert_query, data)
         self.connection.commit()
 
-    # 向mysql插入数据的函数
+    # 插入爬取记录到数据库
     async def insert_data(self, link, author, author_home, find_data, is_download, file_path):
         try:
             # 检查 link 是否已存在
@@ -230,7 +232,7 @@ class xhsVideo(object):
             print("current_url get error")
             return None
 
-    async def getUserHome(self, playwright: Playwright):
+    async def syncUserHome(self, playwright: Playwright):
         browser = await playwright.chromium.launch(headless=True, executable_path=self.local_executable_path)
         context = await browser.new_context(storage_state=self.account_file)
         context = await set_init_script(context)
@@ -252,7 +254,7 @@ class xhsVideo(object):
             links.append(href)
         # 打印符合条件的 a 标签的 href,只取最新的3个
         for link in links[:3]:
-            print('开始处理链接:'+link)
+            print('开始处理链接:' + link)
             # 检查 link 是否已存在
             # self.cursor.execute("SELECT * FROM videolist WHERE link = %s", (link,))
             self.cursor.execute(
@@ -293,6 +295,8 @@ class xhsVideo(object):
                     continue
                 # 下载视频
                 await self.downloadVideo(downloadUrl)
+                # 使用正则表达式提取数字和字母的组合
+                match = re.search(r'/explore/([a-f0-9]+)', link)
                 # 插入记录
                 await self.insert_data(
                     link,
@@ -300,11 +304,11 @@ class xhsVideo(object):
                     self.url,
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     True,
-                    ""
+                    "D:\\xhs\\Download\\" + match.group(1) + ".mov"
                 )
         # 关闭浏览器
         await browser.close()
 
     async def main(self):
         async with async_playwright() as playwright:
-            await self.getUserHome(playwright)
+            await self.syncUserHome(playwright)
