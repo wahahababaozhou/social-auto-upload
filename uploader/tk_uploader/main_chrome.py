@@ -178,11 +178,11 @@ class TiktokVideo(object):
         await file_chooser.set_files(self.file_path)
 
     async def upload(self, playwright: Playwright) -> None:
-        browser = await playwright.chromium.launch(headless=False, executable_path=self.local_executable_path)
+        browser = await playwright.chromium.launch(headless=True, executable_path=self.local_executable_path)
         context = await browser.new_context(storage_state=f"{self.account_file}")
         context = await set_init_script(context)
         page = await context.new_page()
-
+        await page.set_viewport_size({'width': 1280, 'height': 800})
         # change language to eng first
         await self.change_language(page)
         await page.goto("https://www.tiktok.com/tiktokstudio/upload")
