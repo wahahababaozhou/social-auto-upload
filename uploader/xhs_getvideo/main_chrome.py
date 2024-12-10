@@ -140,11 +140,11 @@ class xhsVideo(object):
         INSERT INTO videodetails (
             collection_count, comment_count, share_count, like_count, tags, work_id, work_url, 
             title, description, work_type, publish_time, last_update_time, author_nickname, 
-            author_id, author_url, download_url, gif_url, collection_time,file_path
+            author_id, author_url, download_url, gif_url, collection_time, file_path, link
         ) VALUES (
             %(collection_count)s, %(comment_count)s, %(share_count)s, %(like_count)s, %(tags)s, %(work_id)s, %(work_url)s, 
             %(title)s, %(description)s, %(work_type)s, %(publish_time)s, %(last_update_time)s, %(author_nickname)s, 
-            %(author_id)s, %(author_url)s, %(download_url)s, %(gif_url)s, %(collection_time)s, %(file_path)s
+            %(author_id)s, %(author_url)s, %(download_url)s, %(gif_url)s, %(collection_time)s, %(file_path)s, %(link)s
         );
         """
         # 将中文字段名转换为英文
@@ -171,6 +171,7 @@ class xhsVideo(object):
             'collection_time': datetime.strptime(item.get('采集时间', '1970-01-01 00:00:00'),
                                                  '%Y-%m-%d %H:%M:%S') if item.get('采集时间') else None,
             'file_path': "D:\\xhs\\Download\\" + item.get('作品ID') + ".mov",
+            'link': "/explore/" + item.get('作品ID'),
         }
 
         # 插入数据
@@ -178,7 +179,7 @@ class xhsVideo(object):
         self.connection.commit()
 
     # 插入爬取记录到数据库
-    async def insert_data(self, link, author, author_home, find_data, is_download, file_path):
+    async def insert_data(self, link, author, author_home, find_data, is_download, file_path, upcount):
         try:
             # 检查 link 是否已存在
             self.cursor.execute("SELECT COUNT(*) FROM videolist WHERE link = %s", (link,))
@@ -189,9 +190,9 @@ class xhsVideo(object):
             else:
                 # 执行插入操作
                 self.cursor.execute("""
-                    INSERT INTO videolist (link, author, author_home, find_data, is_download, file_path)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (link, author, author_home, find_data, is_download, file_path))
+                    INSERT INTO videolist (link, author, author_home, find_data, is_download, file_path, upcount)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (link, author, author_home, find_data, is_download, file_path, upcount))
                 self.connection.commit()
                 print(f"成功插入数据: {link}")
 
@@ -304,7 +305,8 @@ class xhsVideo(object):
                     self.url,
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     True,
-                    "D:\\xhs\\Download\\" + match.group(1) + ".mov"
+                    "D:\\xhs\\Download\\" + match.group(1) + ".mov",
+                    0
                 )
         # 关闭浏览器
         await browser.close()

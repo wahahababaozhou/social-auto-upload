@@ -10,7 +10,7 @@ if __name__ == '__main__':
     url = 'https://www.xiaohongshu.com/user/profile/5b6568aa11be106304b4473f?xsec_token=&xsec_source=pc_note'
     auth = '笨蛋土豆丝'
     #校验是否登录
-    cookie_setup = asyncio.run(xhs_setup(account_file, handle=False))
+    cookie_setup = asyncio.run(xhs_setup(account_file, handle=True))
     #获取视频
     app = xhsVideo(account_file, url, auth)
     asyncio.run(app.main(), debug=True)
