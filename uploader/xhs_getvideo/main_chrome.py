@@ -119,9 +119,9 @@ class xhsVideo(object):
             download = True  # 是否下载作品文件，默认值：False
             # 返回作品详细信息，包括下载地址
             # 获取数据失败时返回空字典
-            # print(await xhs.extract(error_link, download, ))
+            # tiktok_logger.success(await xhs.extract(error_link, download, ))
             res = await xhs.extract(link, download, index=[1, 2])
-            print(res)
+            tiktok_logger.success(res)
             self.insertDetail(res[0])
 
     def insertDetail(self, item):
@@ -133,7 +133,7 @@ class xhsVideo(object):
 
         if count != 0:
             # 如果已存在，可以选择跳过插入或进行更新
-            print(f"work_id {item['作品ID']} 已存在，跳过插入。")
+            tiktok_logger.success(f"work_id {item['作品ID']} 已存在，跳过插入。")
             return
         # 插入数据的 SQL 语句（使用英文字段名）
         insert_query = """
@@ -179,25 +179,25 @@ class xhsVideo(object):
         self.connection.commit()
 
     # 插入爬取记录到数据库
-    async def insert_data(self, link, author, author_home, find_data, is_download, file_path, upcount):
+    async def insert_data(self, link, author, author_home, find_data, is_download, folder_path, upcount):
         try:
             # 检查 link 是否已存在
             self.cursor.execute("SELECT COUNT(*) FROM videolist WHERE link = %s", (link,))
             count = self.cursor.fetchone()[0]
 
             if count > 0:
-                print(f"链接 {link} 已存在，跳过插入")
+                tiktok_logger.success(f"链接 {link} 已存在，跳过插入")
             else:
                 # 执行插入操作
                 self.cursor.execute("""
-                    INSERT INTO videolist (link, author, author_home, find_data, is_download, file_path, upcount)
+                    INSERT INTO videolist (link, author, author_home, find_data, is_download, folder_path, upcount)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (link, author, author_home, find_data, is_download, file_path, upcount))
+                """, (link, author, author_home, find_data, is_download, folder_path, upcount))
                 self.connection.commit()
-                print(f"成功插入数据: {link}")
+                tiktok_logger.success(f"成功插入数据: {link}")
 
         except mysql.connector.Error as err:
-            print(f"插入数据时发生错误: {err}")
+            tiktok_logger.success(f"插入数据时发生错误: {err}")
         finally:
             # 不在每次调用时关闭连接，保持连接池更高效。
             pass
@@ -215,7 +215,7 @@ class xhsVideo(object):
             await self.page.wait_for_load_state('load')
             # 获取跳转后的页面 URL
             current_url = self.page.url
-            print(current_url)
+            tiktok_logger.success(current_url)
             await self.page.wait_for_timeout(3000)
             await self.page.goto(self.url, wait_until='load')  # 等待页面完全加载
             # await self.page.goto(self.url)
@@ -230,7 +230,7 @@ class xhsVideo(object):
 
             return current_url
         else:
-            print("current_url get error")
+            tiktok_logger.success("current_url get error")
             return None
 
     async def syncUserHome(self, playwright: Playwright):
@@ -255,11 +255,11 @@ class xhsVideo(object):
             links.append(href)
         # 打印符合条件的 a 标签的 href,只取最新的3个
         for link in links[:3]:
-            print('开始处理链接:' + link)
+            tiktok_logger.success('开始处理链接:' + link)
             # 检查 link 是否已存在
             # self.cursor.execute("SELECT * FROM videolist WHERE link = %s", (link,))
             self.cursor.execute(
-                "SELECT link, author, author_home, find_data, is_download, file_path,id FROM videolist WHERE link = %s",
+                "SELECT link, author, author_home, find_data, is_download, folder_path, id FROM videolist WHERE link = %s",
                 (link,))
             # 获取查询结果
             result = self.cursor.fetchone()
@@ -289,15 +289,13 @@ class xhsVideo(object):
                     # 提交事务
                     self.connection.commit()
             else:
-                print("新视频，准备下载并插入记录......")
+                tiktok_logger.success("新视频，准备下载并插入记录......")
                 # 获取视频下载URL
                 downloadUrl = await self.getVideoDownloadedURL(link)
                 if downloadUrl is None:
                     continue
                 # 下载视频
                 await self.downloadVideo(downloadUrl)
-                # 使用正则表达式提取数字和字母的组合
-                match = re.search(r'/explore/([a-f0-9]+)', link)
                 # 插入记录
                 await self.insert_data(
                     link,
@@ -305,7 +303,7 @@ class xhsVideo(object):
                     self.url,
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     True,
-                    "D:\\xhs\\Download\\" + match.group(1) + ".mov",
+                    "D:\\xhs\\Download",
                     0
                 )
         # 关闭浏览器
