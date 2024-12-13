@@ -3,7 +3,10 @@ import mysql.connector
 from uploader.tk_uploader.main_chrome import tiktok_setup, TiktokVideo
 from uploader.xhs_getvideo.main_chrome import xhsVideo, xhs_setup
 from pathlib import Path
+
+from utils import wechat
 from utils.log import tiktok_logger
+
 
 class xhs2tiktok(object):
     def __init__(self, xhs_config, tk_account_file):
@@ -65,7 +68,16 @@ class xhs2tiktok(object):
                         """, (upcount + 1, id))
             # 提交事务
             self.connection.commit()
+            wechat.sendtext("title: [" + title + "] 上传成功")
 
     async def start(self):
-        await self.downloadxhsVideo()
-        await self.uploadTiktokVideo()
+        try:
+            await self.downloadxhsVideo()
+            await self.uploadTiktokVideo()
+        except Exception as e:
+            tiktok_logger.error(e)
+            wechat.sendtext("tiktok to xhs 执行失败")
+            wechat.sendtext(e)
+        finally:
+            # 关闭数据库连接
+            self.connection.close()
