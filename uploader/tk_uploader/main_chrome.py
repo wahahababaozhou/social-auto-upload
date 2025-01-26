@@ -44,15 +44,19 @@ async def tiktok_setup(account_file, handle=False):
     if not os.path.exists(account_file) or not await cookie_auth(account_file):
         if not handle:
             return False
-        tiktok_logger.info('[+] cookie file is not existed or expired. Now open the browser auto. Please login with your way(gmail phone, whatever, the cookie file will generated after login')
+        tiktok_logger.info(
+            '[+] cookie file is not existed or expired. Now open the browser auto. Please login with your way(gmail phone, whatever, the cookie file will generated after login')
         await get_tiktok_cookie(account_file)
     return True
+
+
 async def xhs_setup(account_file, handle=False):
     account_file = get_absolute_path(account_file, "tk_uploader")
     if not os.path.exists(account_file) or not await cookie_auth(account_file):
         if not handle:
             return False
-        tiktok_logger.info('[+] cookie file is not existed or expired. Now open the browser auto. Please login with your way(gmail phone, whatever, the cookie file will generated after login')
+        tiktok_logger.info(
+            '[+] cookie file is not existed or expired. Now open the browser auto. Please login with your way(gmail phone, whatever, the cookie file will generated after login')
         await get_xhs_cookie(account_file)
     return True
 
@@ -63,7 +67,7 @@ async def get_tiktok_cookie(account_file):
             'args': [
                 '--lang en-GB',
             ],
-            'headless': False,  # Set headless option here
+            'headless': True,  # Set headless option here
         }
         # Make sure to run headed.
         browser = await playwright.chromium.launch(**options)
@@ -77,13 +81,14 @@ async def get_tiktok_cookie(account_file):
         # 点击调试器的继续，保存cookie
         await context.storage_state(path=account_file)
 
+
 async def get_xhs_cookie(account_file):
     async with async_playwright() as playwright:
         options = {
             'args': [
                 '--lang zh-CN',
             ],
-            'headless': False,  # Set headless option here
+            'headless': True,  # Set headless option here
         }
         # Make sure to run headed.
         browser = await playwright.chromium.launch(**options)
@@ -99,13 +104,14 @@ async def get_xhs_cookie(account_file):
 
 
 class TiktokVideo(object):
-    def __init__(self, title, file_path, tags, publish_date, account_file, thumbnail_path=None):
+    def __init__(self, title, file_path, tags, publish_date, account_file, thumbnail_path=None, headless=True):
         self.title = title
         self.file_path = file_path
         self.tags = tags
         self.publish_date = publish_date
         self.thumbnail_path = thumbnail_path
         self.account_file = account_file
+        self.headless = headless
         self.local_executable_path = LOCAL_CHROME_PATH
         self.locator_base = None
 
@@ -178,7 +184,7 @@ class TiktokVideo(object):
         await file_chooser.set_files(self.file_path)
 
     async def upload(self, playwright: Playwright) -> None:
-        browser = await playwright.chromium.launch(headless=False, executable_path=self.local_executable_path)
+        browser = await playwright.chromium.launch(headless=self.headless, executable_path=self.local_executable_path)
         context = await browser.new_context(storage_state=f"{self.account_file}")
         context = await set_init_script(context)
         page = await context.new_page()
@@ -334,7 +340,7 @@ class TiktokVideo(object):
         if await page.locator('iframe[data-tt="Upload_index_iframe"]').count():
             self.locator_base = page.frame_locator(Tk_Locator.tk_iframe)
         else:
-            self.locator_base = page.locator(Tk_Locator.default) 
+            self.locator_base = page.locator(Tk_Locator.default)
 
     async def main(self):
         async with async_playwright() as playwright:

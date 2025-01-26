@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import mysql.connector
 
 from uploader.tk_uploader.main_chrome import tiktok_setup, TiktokVideo
@@ -36,6 +38,16 @@ class xhs2tiktok(object):
         # 获取查询结果
         result = self.cursor.fetchall()
         for row in result:
+            self.cursor.execute("""
+            SELECT last_upload_time FROM video_uploads WHERE id = %s
+            """, ('yyy',))
+            upload_time_row = self.cursor.fetchone()
+            # 获取最后上传时间
+            last_upload_time = upload_time_row[0] if upload_time_row else None
+            # 检查最后上传时间是否在今天
+            if last_upload_time is not None and datetime.now() - last_upload_time < timedelta(hours=6):
+                tiktok_logger.success("6小时内已经上传过视频了，跳过...")
+                return
             tiktok_logger.success(row)
             title = row[16]
             tiktok_logger.success("tile:" + title)
@@ -58,7 +70,7 @@ class xhs2tiktok(object):
             # 校验cookie是否过期
             await tiktok_setup(self.tk_account_file, handle=True)
             # 上传视频
-            app = TiktokVideo(title, file_path, tags, 0, self.tk_account_file)
+            app = TiktokVideo(title, file_path, tags, 0, self.tk_account_file, headless=True)
             await app.main()
             # 更新数据库中上传计数为1
             self.cursor.execute("""
@@ -66,6 +78,10 @@ class xhs2tiktok(object):
                             SET  upcount = %s
                             WHERE id = %s
                         """, (upcount + 1, id))
+            # 更新 last_upload_time
+            self.cursor.execute("""
+                UPDATE video_uploads set last_upload_time=%s where id=%s
+            """, ("yyy", datetime.now()))
             # 提交事务
             self.connection.commit()
             wechat.sendtext("title: [" + title + "] 上传成功")

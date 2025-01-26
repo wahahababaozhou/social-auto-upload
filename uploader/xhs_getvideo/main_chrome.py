@@ -156,7 +156,7 @@ class xhsVideo(object):
             'tags': item.get('作品标签', '') if item.get('作品标签') else None,
             'work_id': item.get('作品ID', '') if item.get('作品ID') else None,
             'work_url': item.get('作品链接', '') if item.get('作品链接') else None,
-            'title': item.get('作品标题', '') if item.get('作品标题') else None,
+            'title': item.get('作品标题', '') if item.get('作品标题') else "#girl",
             'description': item.get('作品描述', '') if item.get('作品描述') else None,
             'work_type': item.get('作品类型', '') if item.get('作品类型') else None,
             'publish_time': datetime.strptime(item.get('发布时间', '1970-01-01_00:00:00'),
