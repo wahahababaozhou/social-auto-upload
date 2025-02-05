@@ -71,20 +71,25 @@ class xhs2tiktok(object):
             await tiktok_setup(self.tk_account_file, handle=True)
             # 上传视频
             app = TiktokVideo(title, file_path, tags, 0, self.tk_account_file, headless=True)
-            await app.main()
-            # 更新数据库中上传计数为1
-            self.cursor.execute("""
-                            UPDATE videolist
-                            SET  upcount = %s
-                            WHERE id = %s
-                        """, (upcount + 1, id))
-            # 更新 last_upload_time
-            self.cursor.execute("""
-                UPDATE video_uploads set last_upload_time=%s where id=%s
-            """, ("yyy", datetime.now()))
-            # 提交事务
-            self.connection.commit()
-            wechat.sendtext("title: [" + title + "] 上传成功")
+            res = await app.main()
+            if res == 'success':
+                tiktok_logger.success("上传成功")
+                # 更新数据库中上传计数为1
+                self.cursor.execute("""
+                                UPDATE videolist
+                                SET  upcount = %s
+                                WHERE id = %s
+                            """, (upcount + 1, id))
+                # 更新 last_upload_time
+                self.cursor.execute("""
+                    UPDATE video_uploads set last_upload_time=%s where id=%s
+                """, (datetime.now(), "yyy"))
+                # 提交事务
+                self.connection.commit()
+                wechat.sendtext("title: [" + title + "] 上传成功")
+            else:
+                tiktok_logger.error("上传失败")
+                wechat.sendtext(f"title: [{title}] 上传失败:{res}")
 
     async def start(self):
         try:

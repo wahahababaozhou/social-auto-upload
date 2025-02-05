@@ -183,7 +183,7 @@ class TiktokVideo(object):
         file_chooser = await fc_info.value
         await file_chooser.set_files(self.file_path)
 
-    async def upload(self, playwright: Playwright) -> None:
+    async def upload(self, playwright: Playwright) -> str:
         browser = await playwright.chromium.launch(headless=self.headless, executable_path=self.local_executable_path)
         context = await browser.new_context(storage_state=f"{self.account_file}")
         context = await set_init_script(context)
@@ -223,14 +223,16 @@ class TiktokVideo(object):
         if self.publish_date != 0:
             await self.set_schedule_time(page, self.publish_date)
 
-        await self.click_publish(page)
-
+        res = await self.click_publish(page)
+        if res == 'success':
+            tiktok_logger.info(f'[+]Uploading-------{self.title}.mp4 Success')
         await context.storage_state(path=f"{self.account_file}")  # save cookie
         tiktok_logger.info('  [-] update cookie！')
         await asyncio.sleep(2)  # close delay for look the video status
         # close all
         await context.close()
         await browser.close()
+        return res
 
     async def add_title_tags(self, page):
 
@@ -289,6 +291,7 @@ class TiktokVideo(object):
     async def click_publish(self, page):
         # success_flag_div = 'div.common-modal-confirm-modal'
         specific_text = "Manage your posts"
+        res = 'success'
         # 最多循环20次
         for i in range(20):
             try:
@@ -305,7 +308,8 @@ class TiktokVideo(object):
                     break
                 if i == 19:
                     tiktok_logger.exception(f"到达第 {20} 次时，跳出循环,结束上传,并通知上传失败")
-                    break  # 当 i 等于 10 时，跳出循环
+                    res = f"到达第 {20} 次时，跳出循环,结束上传,并通知上传失败"
+                    break
             except Exception as e:
                 if await self.locator_base.locator(f'span:has-text("{specific_text}")').count():
                     tiktok_logger.success("  [-]video published success")
@@ -315,6 +319,8 @@ class TiktokVideo(object):
                     tiktok_logger.info("  [-] video publishing")
                     await page.screenshot(full_page=True)
                     await asyncio.sleep(0.5)
+
+        return res
 
     async def detect_upload_status(self, page):
         while True:
@@ -344,4 +350,4 @@ class TiktokVideo(object):
 
     async def main(self):
         async with async_playwright() as playwright:
-            await self.upload(playwright)
+            return await self.upload(playwright)
