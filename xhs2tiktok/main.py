@@ -45,8 +45,8 @@ class xhs2tiktok(object):
             # 获取最后上传时间
             last_upload_time = upload_time_row[0] if upload_time_row else None
             # 检查最后上传时间是否在今天
-            if last_upload_time is not None and datetime.now() - last_upload_time < timedelta(hours=6):
-                tiktok_logger.success("6小时内已经上传过视频了，跳过...")
+            if last_upload_time is not None and datetime.now() - last_upload_time < timedelta(hours=12):
+                tiktok_logger.success("12小时内已经上传过视频了，跳过...")
                 return
             tiktok_logger.success(row)
             title = row[16]
@@ -70,7 +70,7 @@ class xhs2tiktok(object):
             # 校验cookie是否过期
             await tiktok_setup(self.tk_account_file, handle=True)
             # 上传视频
-            app = TiktokVideo(title, file_path, tags, 0, self.tk_account_file, headless=True)
+            app = TiktokVideo(title, file_path, tags, 0, self.tk_account_file, headless=False)
             res = await app.main()
             if res == 'success':
                 tiktok_logger.success("上传成功")

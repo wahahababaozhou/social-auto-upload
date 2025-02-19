@@ -283,10 +283,10 @@ class TiktokVideo(object):
         await page.goto("https://www.tiktok.com/setting")
         await page.wait_for_url("https://www.tiktok.com/setting", timeout=100000)
         await page.wait_for_selector('#header-more-menu-icon')
-
-        await page.locator('#header-more-menu-icon').hover()
-        await page.locator('[data-e2e="language-select"]').click()
-        await page.locator('#lang-setting-popup-list >> text=English').click()
+        # 不在修改语言，默认为英文了
+        # await page.locator('#header-more-menu-icon').hover()
+        # await page.locator('[data-e2e="language-select"]').click()
+        # await page.locator('#lang-setting-popup-list >> text=English').click()
 
     async def click_publish(self, page):
         # success_flag_div = 'div.common-modal-confirm-modal'
@@ -301,9 +301,10 @@ class TiktokVideo(object):
 
                 # await self.locator_base.locator(success_flag_div).wait_for(state="visible", timeout=3000)
                 # 判定是否进入作品管理页面
-
-                endpage_span = self.locator_base.locator(f'span:has-text("{specific_text}")')
-                if await endpage_span.count():
+                # https://www.tiktok.com/tiktokstudio/content
+                # endpage_span = self.locator_base.locator(f'span:has-text("{specific_text}")')
+                await asyncio.sleep(2)
+                if page.url == 'https://www.tiktok.com/tiktokstudio/content':
                     tiktok_logger.success("  [-] video published success")
                     break
                 if i == 19:
