@@ -15,7 +15,10 @@ from utils.log import tiktok_logger
 
 async def cookie_auth(account_file):
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=True)
+        proxy = {
+            "server": "http://127.0.0.1:11079",  # 替换为你的代理地址和端口
+        }
+        browser = await playwright.chromium.launch(headless=True, proxy=proxy)
         context = await browser.new_context(storage_state=account_file)
         context = await set_init_script(context)
         # 创建一个新的页面
@@ -68,6 +71,9 @@ async def get_tiktok_cookie(account_file):
                 '--lang en-GB',
             ],
             'headless': True,  # Set headless option here
+            'proxy': {
+                "server": "http://127.0.0.1:11079",  # 替换为你的代理地址和端口
+            }
         }
         # Make sure to run headed.
         browser = await playwright.chromium.launch(**options)
@@ -89,6 +95,9 @@ async def get_xhs_cookie(account_file):
                 '--lang zh-CN',
             ],
             'headless': True,  # Set headless option here
+            'proxy': {
+                "server": "http://127.0.0.1:11079",  # 替换为你的代理地址和端口
+            }
         }
         # Make sure to run headed.
         browser = await playwright.chromium.launch(**options)
@@ -184,7 +193,12 @@ class TiktokVideo(object):
         await file_chooser.set_files(self.file_path)
 
     async def upload(self, playwright: Playwright) -> str:
-        browser = await playwright.chromium.launch(headless=self.headless, executable_path=self.local_executable_path)
+        proxy = {
+            "server": "http://127.0.0.1:11079",  # 替换为你的代理地址和端口
+        }
+        browser = await playwright.chromium.launch(headless=self.headless,
+                                                   proxy=proxy,
+                                                   executable_path=self.local_executable_path)
         context = await browser.new_context(storage_state=f"{self.account_file}")
         context = await set_init_script(context)
         page = await context.new_page()
