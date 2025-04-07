@@ -45,7 +45,7 @@ class xhs2tiktok(object):
             # 获取最后上传时间
             last_upload_time = upload_time_row[0] if upload_time_row else None
             # 检查最后上传时间是否在今天
-            if last_upload_time is not None and datetime.now() - last_upload_time < timedelta(hours=3):
+            if last_upload_time is not None and datetime.now() - last_upload_time < timedelta(hours=7):
                 tiktok_logger.success("12小时内已经上传过视频了，跳过...")
                 return
             tiktok_logger.success(row)
