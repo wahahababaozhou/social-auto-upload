@@ -45,7 +45,7 @@ class xhs2tiktok(object):
             # 获取最后上传时间
             last_upload_time = upload_time_row[0] if upload_time_row else None
             # 检查最后上传时间是否在今天
-            if last_upload_time is not None and datetime.now() - last_upload_time < timedelta(hours=12):
+            if last_upload_time is not None and datetime.now() - last_upload_time < timedelta(hours=3):
                 tiktok_logger.success("12小时内已经上传过视频了，跳过...")
                 return
             tiktok_logger.success(row)
@@ -59,6 +59,15 @@ class xhs2tiktok(object):
             file_name = row[14]
             # 查找文件
             file_path = next(folder_path.glob(f"{file_name}*"), None)
+            # 获取文件扩展名
+            file_extension = file_path.suffix
+
+            print(f"文件扩展名: {file_extension}")
+            video_types = [
+                '.mp4',
+                '.mov'
+            ]
+
             # 输入的标签列表
             tags = row[13].split()
             tiktok_logger.success("tags:" + row[13])
@@ -67,6 +76,20 @@ class xhs2tiktok(object):
             # 使用列表推导式加上 # 前缀，并连接为一个字符串
             formatted_tags = ' '.join([f"#{tag}" for tag in tags])
             tiktok_logger.success("formatted_tags:" + formatted_tags)
+            # 判断文件是否为视频文件 不是则跳过
+            if file_extension not in video_types:
+                print(f"{file_path} 不是一个视频文件，类型为 {file_extension}")
+                tiktok_logger.success("非视频类,跳过成功")
+                # 更新数据库中上传计数为1
+                self.cursor.execute("""
+                                UPDATE videolist
+                                SET  upcount = %s
+                                WHERE id = %s
+                            """, (upcount + 1, id))
+                # 提交事务
+                self.connection.commit()
+                wechat.sendtext("title: [" + title + "] 上传成功")
+                continue
             # 校验cookie是否过期
             await tiktok_setup(self.tk_account_file, handle=True)
             # 上传视频
