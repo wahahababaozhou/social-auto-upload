@@ -253,13 +253,13 @@ class xhsVideo(object):
         for element in elements:
             href = await element.get_attribute('href')
             links.append(href)
-        # 打印符合条件的 a 标签的 href,只取最新的3个
-        for link in links[:3]:
+        # 打印符合条件的 a 标签的 href,只取最新的5个
+        for link in links[:6]:
             tiktok_logger.success('开始处理链接:' + link)
             # 检查 link 是否已存在
             # self.cursor.execute("SELECT * FROM videolist WHERE link = %s", (link,))
             self.cursor.execute(
-                "SELECT link, author, author_home, find_data, is_download, folder_path, id FROM videolist WHERE link = %s",
+                "SELECT link, author, author_home, find_data, is_download, folder_path, id, upcount FROM videolist WHERE link = %s",
                 (link,))
             # 获取查询结果
             result = self.cursor.fetchone()
@@ -272,8 +272,9 @@ class xhsVideo(object):
                 is_download_from_db = result[4]
                 file_path_from_db = result[5]
                 id = result[6]
+                upcount = result[7]
                 # 检查是否下载
-                if is_download_from_db == '0':
+                if is_download_from_db == '0' and upcount != 999:
                     # 获取视频下载URL
                     downloadUrl = await self.getVideoDownloadedURL(link)
                     if downloadUrl is None:
@@ -295,17 +296,30 @@ class xhsVideo(object):
                 if downloadUrl is None:
                     continue
                 # 下载视频
-                await self.downloadVideo(downloadUrl)
-                # 插入记录
-                await self.insert_data(
-                    link,
-                    self.author,
-                    self.url,
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    True,
-                    "D:\\xhs\\Download",
-                    0
-                )
+                try:
+                    await self.downloadVideo(downloadUrl)
+                    # 插入记录
+                    await self.insert_data(
+                        link,
+                        self.author,
+                        self.url,
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        True,
+                        "D:\\xhs\\Download",
+                        0
+                    )
+                except Exception as e:
+                    print(f"下载视频发生了错误: {e}")
+                    # 插入记录
+                    await self.insert_data(
+                        link,
+                        self.author,
+                        self.url,
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        False,
+                        "D:\\xhs\\Download",
+                        999
+                    )
         # 关闭浏览器
         await browser.close()
 

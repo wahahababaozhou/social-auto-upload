@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 
+import xhs_to_bilibili_limin
 from conf import BASE_DIR
 from xhs2tiktok.main import xhs2tiktok
 
@@ -35,3 +36,5 @@ if __name__ == '__main__':
     ]
     app = xhs2tiktok(xhs_config, tk_account_file)
     asyncio.run(app.start(), debug=False)
+    # 小红书视频搬运到B站limin账号下
+    xhs_to_bilibili_limin.run()

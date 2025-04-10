@@ -34,7 +34,7 @@ class xhs2tiktok(object):
 
     async def uploadTiktokVideo(self):
         self.cursor.execute(
-            "SELECT	* FROM	videolist a	LEFT JOIN videodetails b ON a.link = b.link WHERE	upcount = 0")
+            "SELECT	title,folder_path,work_id,tags,b.id,upcount FROM	videolist a	LEFT JOIN videodetails b ON a.link = b.link WHERE upcount = 0 and is_download = 1")
         # 获取查询结果
         result = self.cursor.fetchall()
         for row in result:
@@ -49,14 +49,14 @@ class xhs2tiktok(object):
                 tiktok_logger.success("12小时内已经上传过视频了，跳过...")
                 return
             tiktok_logger.success(row)
-            title = row[16]
+            title = row[0]
             tiktok_logger.success("tile:" + title)
-            folder_path = row[5]
+            folder_path = row[1]
             tiktok_logger.success("filepath:" + folder_path)
             # 设置要查询的文件夹路径
             folder_path = Path(folder_path)
             # 要查找的文件名
-            file_name = row[14]
+            file_name = row[2]
             # 查找文件
             file_path = next(folder_path.glob(f"{file_name}*"), None)
             # 获取文件扩展名
@@ -69,10 +69,10 @@ class xhs2tiktok(object):
             ]
 
             # 输入的标签列表
-            tags = row[13].split()
-            tiktok_logger.success("tags:" + row[13])
-            id = row[6]
-            upcount = row[7]
+            tags = row[3].split()
+            tiktok_logger.success("tags:" + row[3])
+            id = row[4]
+            upcount = row[5]
             # 使用列表推导式加上 # 前缀，并连接为一个字符串
             formatted_tags = ' '.join([f"#{tag}" for tag in tags])
             tiktok_logger.success("formatted_tags:" + formatted_tags)
