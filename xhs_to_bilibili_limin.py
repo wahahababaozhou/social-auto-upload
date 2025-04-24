@@ -82,67 +82,93 @@ def run():
     # 获取查询结果
     result = cursor.fetchall()
     for row in result:
-        title = row[0]
-        folder_path = row[7]
-        # 设置要查询的文件夹路径
-        folder_path = Path(folder_path)
-        # 要查找的文件名
-        file_name = row[6]
-        # 查找文件
-        file_path = next(folder_path.glob(f"{file_name}*"), None)
-        # 获取文件扩展名
-        file_extension = file_path.suffix
-        print(f"文件扩展名: {file_extension}")
-        video_types = [
-            '.mp4',
-            '.mov'
-        ]
-        # 输入的标签列表
-        tags = row[2].split()
-        id = row[3]
-        upcount = row[4] or 0
-        author_home = row[5]
-        # 使用列表推导式加上 # 前缀，并连接为一个字符串
-        # formatted_tags = ' '.join([f"#{tag}" for tag in tags])
-        # 判断文件是否为视频文件 不是则跳过
-        if file_extension not in video_types:
-            print(f"{file_path} 不是一个视频文件，类型为 {file_extension}")
+        try:
+            title = row[0]
+            folder_path = row[7]
+            # 设置要查询的文件夹路径
+            folder_path = Path(folder_path)
+            # 要查找的文件名
+            file_name = row[6]
+            # 查找文件
+            file_path = next(folder_path.glob(f"{file_name}*"), None)
+            upcount = row[4] or 0
+            id = row[3]
+            if file_path is None:
+                # 更新数据库中上传计数为1
+                cursor.execute("""
+                                    UPDATE videolist
+                                    SET  bilibili_upcount = %s
+                                    WHERE id = %s
+                                """, (upcount + 20, id))
+                # 提交事务
+                connection.commit()
+                wechat.sendtext("title: [" + title + "] 上传成功")
+                continue
+
+            # 获取文件扩展名
+            file_extension = file_path.suffix
+            print(f"文件扩展名: {file_extension}")
+            video_types = [
+                '.mp4',
+                '.mov'
+            ]
+            # 输入的标签列表
+            tag = row[2]
+            if tag is None:
+                tag = ''
+            tags = tag.split()
+            author_home = row[5]
+            # 使用列表推导式加上 # 前缀，并连接为一个字符串
+            # formatted_tags = ' '.join([f"#{tag}" for tag in tags])
+            # 判断文件是否为视频文件 不是则跳过
+            if file_extension not in video_types:
+                print(f"{file_path} 不是一个视频文件，类型为 {file_extension}")
+                # 更新数据库中上传计数为1
+                cursor.execute("""
+                                    UPDATE videolist
+                                    SET  bilibili_upcount = %s
+                                    WHERE id = %s
+                                """, (upcount + 10, id))
+                # 提交事务
+                connection.commit()
+                wechat.sendtext("title: [" + title + "] 上传成功")
+                continue
+            # # 校验cookie是否过期
+            # await tiktok_setup(tk_account_file, handle=True)
+            # # 上传视频
+            # app = TiktokVideo(title, file_path, tags, 0, tk_account_file, headless=False)
+            # res = await app.main()
+            res = upload_youtube_video(file_path, author_home, title + str(id), author_home, tags, username, 21)
+            if res == 'success':
+                # 更新数据库中上传计数为1
+                cursor.execute("""
+                                    UPDATE videolist
+                                    SET  bilibili_upcount = %s
+                                    WHERE id = %s
+                                """, (upcount + 10, id))
+                # 提交事务
+                connection.commit()
+                wechat.sendtext(f"小红书 to B站 [{username}]title: [{title}] 成功:{res}")
+            else:
+                # 更新数据库中上传计数为1
+                cursor.execute("""
+                                    UPDATE videolist
+                                    SET  bilibili_upcount = %s
+                                    WHERE id = %s
+                                """, (upcount + 1, id))
+                # 提交事务
+                connection.commit()
+                wechat.sendtext(f"小红书 to B站 [{username}]title: [{title}] 上传失败:{res}")
+        except:
+            upcount = row[4] or 0
+            id = row[3]
             # 更新数据库中上传计数为1
             cursor.execute("""
-                                UPDATE videolist
-                                SET  bilibili_upcount = %s
-                                WHERE id = %s
-                            """, (upcount + 10, id))
-            # 提交事务
-            connection.commit()
-            wechat.sendtext("title: [" + title + "] 上传成功")
-            continue
-        # # 校验cookie是否过期
-        # await tiktok_setup(tk_account_file, handle=True)
-        # # 上传视频
-        # app = TiktokVideo(title, file_path, tags, 0, tk_account_file, headless=False)
-        # res = await app.main()
-        res = upload_youtube_video(file_path, author_home, title + str(id), author_home, tags, username, 21)
-        if res == 'success':
-            # 更新数据库中上传计数为1
-            cursor.execute("""
-                                UPDATE videolist
-                                SET  bilibili_upcount = %s
-                                WHERE id = %s
-                            """, (upcount + 10, id))
-            # 提交事务
-            connection.commit()
-            wechat.sendtext(f"小红书 to B站 [{username}]title: [{title}] 成功:{res}")
-        else:
-            # 更新数据库中上传计数为1
-            cursor.execute("""
-                                UPDATE videolist
-                                SET  bilibili_upcount = %s
-                                WHERE id = %s
-                            """, (upcount + 1, id))
-            # 提交事务
-            connection.commit()
-            wechat.sendtext(f"小红书 to B站 [{username}]title: [{title}] 上传失败:{res}")
+                                    UPDATE videolist
+                                    SET  bilibili_upcount = %s
+                                    WHERE id = %s
+                                """, (upcount + 30, id))
+            wechat.sendtext(f"小红书 to B站 [{username}]id: [{id}] 上传失败!")
 
 
 if __name__ == '__main__':

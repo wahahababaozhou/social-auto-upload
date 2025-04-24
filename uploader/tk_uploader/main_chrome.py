@@ -211,7 +211,7 @@ class TiktokVideo(object):
         await page.wait_for_url("https://www.tiktok.com/tiktokstudio/upload", timeout=10000)
 
         try:
-            await page.wait_for_selector('iframe[data-tt="Upload_index_iframe"], div.upload-container', timeout=10000)
+            await page.wait_for_selector('iframe[data-tt="Upload_index_iframe"], div.upload-container', timeout=5000)
             tiktok_logger.info("Either iframe or div appeared.")
         except Exception as e:
             tiktok_logger.error("Neither iframe nor div appeared within the timeout.")
