@@ -146,7 +146,7 @@ class xhs2tiktok(object):
             await self.uploadTiktokVideo()
         except Exception as e:
             tiktok_logger.error(e)
-            wechat.sendtext("tiktok to xhs 执行失败")
+            wechat.sendtext("xhs to tiktok 执行失败")
             wechat.sendtext(e)
         finally:
             # 关闭数据库连接
