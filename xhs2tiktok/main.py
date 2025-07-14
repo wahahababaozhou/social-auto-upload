@@ -143,10 +143,15 @@ class xhs2tiktok(object):
     async def start(self):
         try:
             await self.downloadxhsVideo()
+        except Exception as e:
+            tiktok_logger.error(e)
+            wechat.sendtext("xhs to tiktok 执行失败1 downloadxhsVideo")
+            wechat.sendtext(e)
+        try:
             await self.uploadTiktokVideo()
         except Exception as e:
             tiktok_logger.error(e)
-            wechat.sendtext("xhs to tiktok 执行失败")
+            wechat.sendtext("xhs to tiktok 执行失败2 uploadTiktokVideo")
             wechat.sendtext(e)
         finally:
             # 关闭数据库连接
