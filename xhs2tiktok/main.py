@@ -70,7 +70,7 @@ class xhs2tiktok(object):
                                     WHERE id = %s
                                 """, (upcount + 1, id))
                     tiktok_logger.error("上传失败")
-                    wechat.sendtext(f"title: [{title}] 上传失败:未找对应ID{id}的视频文件！")
+                    wechat.sendtext(f"小红书toTiktok,title: [{title}] 上传失败:未找对应ID{id}的视频文件！")
                     continue
                 # 获取文件扩展名
                 file_extension = file_path.suffix
@@ -102,7 +102,7 @@ class xhs2tiktok(object):
                                 """, (upcount + 1, id))
                     # 提交事务
                     self.connection.commit()
-                    wechat.sendtext("title: [" + title + "] 上传成功")
+                    wechat.sendtext("小红书toTiktok,title: [" + title + "] 上传成功")
                     continue
                 # 校验cookie是否过期
                 await tiktok_setup(self.tk_account_file, handle=True)
@@ -123,10 +123,10 @@ class xhs2tiktok(object):
                     """, (datetime.now(), "yyy"))
                     # 提交事务
                     self.connection.commit()
-                    wechat.sendtext("title: [" + title + "] 上传成功")
+                    wechat.sendtext("小红书toTiktok,title: [" + title + "] 上传成功")
                 else:
                     tiktok_logger.error("上传失败")
-                    wechat.sendtext(f"title: [{title}] 上传失败:{res}")
+                    wechat.sendtext(f"小红书toTiktok,title: [{title}] 上传失败:{res}")
             except:
                 tiktok_logger.error("上传失败")
                 title = row[0]
