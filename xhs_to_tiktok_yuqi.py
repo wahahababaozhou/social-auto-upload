@@ -27,17 +27,31 @@ if __name__ == '__main__':
             "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
             "url": 'https://www.xiaohongshu.com/user/profile/65a0d4820000000022002ad1?xsec_token=&xsec_source=pc_note',
             "author": "乐亦"
-        },
-        {
-            "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
-            "url": 'https://www.xiaohongshu.com/user/profile/620760c800000000100059d7?xsec_token=&xsec_source=pc_note',
-            "author": "ing"
-        },
+        }
+        # ,
+        # {
+        #     "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
+        #     "url": 'https://www.xiaohongshu.com/user/profile/620760c800000000100059d7?xsec_token=&xsec_source=pc_note',
+        #     "author": "ing"
+        # }
+        ,
         {
             "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
             "url": 'https://www.xiaohongshu.com/user/profile/65394ed60000000006004a1a?xsec_token=&xsec_source=pc_note',
             "author": "小李财"
         }
+        ,
+        {
+            "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
+            "url": 'https://www.xiaohongshu.com/user/profile/5b091140e8ac2b7053d459d7?xsec_token=&xsec_source=pc_note',
+            "author": "多多duola"
+        }
+        # ,
+        # {
+        #     "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
+        #     "url": 'https://www.xiaohongshu.com/user/profile/67d1640b000000000e02ce4e?xsec_token=&xsec_source=pc_note',
+        #     "author": "一栗小沙子"
+        # }
         # ,
         # {
         #     "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
