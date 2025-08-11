@@ -35,9 +35,15 @@ if __name__ == '__main__':
         },
         {
             "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
-            "url": 'https://www.xiaohongshu.com/user/profile/5a8ba77211be102527e3e730?xsec_token=&xsec_source=pc_note',
-            "author": "小羊同学"
+            "url": 'https://www.xiaohongshu.com/user/profile/65394ed60000000006004a1a?xsec_token=&xsec_source=pc_note',
+            "author": "小李财"
         }
+        # ,
+        # {
+        #     "xhs_account_file": Path(BASE_DIR / "cookies" / "xhs_uploader" / "account.json"),
+        #     "url": 'https://www.xiaohongshu.com/user/profile/5a8ba77211be102527e3e730?xsec_token=&xsec_source=pc_note',
+        #     "author": "小羊同学"
+        # }
     ]
     app = xhs2tiktok(xhs_config, tk_account_file)
     asyncio.run(app.start(), debug=False)
