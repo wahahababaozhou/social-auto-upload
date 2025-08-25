@@ -318,6 +318,16 @@ class TiktokVideo(object):
                 # https://www.tiktok.com/tiktokstudio/content
                 # endpage_span = self.locator_base.locator(f'span:has-text("{specific_text}")')
                 await asyncio.sleep(2)
+                # 处理可能出现的 Continue to post 弹窗
+                if await self.locator_base.locator('div:has-text("Continue to post")').count():
+                    tiktok_logger.info("[-] Found 'Continue to post' confirmation, clicking it.")
+                    await self.locator_base.get_by_role("button", name="Cancel").click()
+                    await asyncio.sleep(5)
+                if await page.locator("h1:has-text('Content may be restricted')").count() > 0:
+                    tiktok_logger.info("页面包含 Content may be restricted 标签")
+                    res = f"视频预检测不通过，取消上传."
+                    break
+
                 if page.url == 'https://www.tiktok.com/tiktokstudio/content':
                     tiktok_logger.success("  [-] video published success")
                     break

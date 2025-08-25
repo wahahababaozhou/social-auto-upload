@@ -124,9 +124,20 @@ class xhs2tiktok(object):
                     # 提交事务
                     self.connection.commit()
                     wechat.sendtext("小红书toTiktok,title: [" + title + "] 上传成功")
-                else:
+                elif res == '视频预检测不通过，取消上传.':
                     tiktok_logger.error("上传失败")
                     wechat.sendtext(f"小红书toTiktok,title: [{title}] 上传失败:{res}")
+                    # 更新数据库中上传计数为1
+                    self.cursor.execute("""
+                                        UPDATE videolist
+                                        SET  upcount = %s
+                                        WHERE id = %s
+                                        """, (upcount + 10, id))
+                    # 提交事务
+                    self.connection.commit()
+                else:
+                    tiktok_logger.error("上传失败")
+                    wechat.sendtext(f"上传至tiktok流程，title: [{title}] 上传失败!!!")
             except:
                 tiktok_logger.error("上传失败")
                 title = row[0]
